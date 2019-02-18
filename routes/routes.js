@@ -19,6 +19,7 @@ module.exports = (app) => {
     app.post('/init_order', order.initOrder)
     app.post('/update_collection_type', order.updateCollectionType)
     app.post('/random_max_price_order', order.randomMaxPriceOrder)
+    app.post('/reckless_order', order.recklessRandomOrder)
     app.post('/clear_order_items', order.clearOrderItems)
 
 

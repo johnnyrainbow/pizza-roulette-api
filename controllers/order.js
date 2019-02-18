@@ -23,9 +23,7 @@ module.exports = {
             var responses = []
             var errors = []
             var items = response.items
-            console.log(items)
             for (var i = 0; i < items.length; i++) {
-                console.log(i)
                 hellPizza.Order.removeItem(req.body.token, items[i].order_item_id, function (err, response) {
                     if (err) {
                         errors.push(err)
@@ -40,6 +38,7 @@ module.exports = {
             }
         })
     },
+
     updateCollectionType(req, res) {
         hellPizza.Order.updateCollectionType(req.body.token, req.body.order_id, req.body.type, function (err, response) {
             if (err) return res.status(500).send({ error: err })
@@ -96,7 +95,6 @@ module.exports = {
 
         //get every menu in parallel, 
         //not using full menu as want to have options later.
-
         var menu = []
 
         async.parallel([
@@ -138,18 +136,25 @@ module.exports = {
 
             var random_menu = Math.floor(Math.random() * menu.length) //rand between 0 and 4
             var selected_menu = menu[random_menu]
-
+            var errors = []
             addRandomItemToOrder(req.body.token, selected_menu, evaluateNext)
 
             function evaluateNext(err, response) {
-                if (err) return res.status(500).send({ error: err })
+                if (err) {
+                    errors.push(err)
+                    var random_menu = Math.floor(Math.random() * menu.length) //rand between 0 and 4
+                    var selected_menu = menu[random_menu]
+
+                    return addRandomItemToOrder(req.body.token, selected_menu, evaluateNext)
+                } //if it fails to add (due to out of stock?) should keep adding others
 
                 if (response.total_price < req.body.max_price) {
                     var random_menu = Math.floor(Math.random() * menu.length) //rand between 0 and 4
                     var selected_menu = menu[random_menu]
+
                     return addRandomItemToOrder(req.body.token, selected_menu, evaluateNext)
                 }
-                return res.status(200).send({ order: response })
+                return res.status(200).send({ order: response, errors: errors })
             }
         })
     },
@@ -167,11 +172,10 @@ module.exports = {
 function addRandomItemToOrder(order_token, selected_menu, callback) {
     var rnd = Math.floor(Math.random() * selected_menu.length)
     var random_item = selected_menu[rnd]
-    console.log(random_item)
     var random_size_num = Math.floor(Math.random() * random_item.sizes.length)
     var random_size = random_item.sizes[random_size_num]
 
-    hellPizza.Order.addItem(order_token, random_item.item_id, random_size.item_size_id, 1, {}, "", function (err, response) {
+    hellPizza.Order.addItem(order_token, random_item.item_id, random_size.item_size_id, 150, {}, "", function (err, response) {
         if (err) return callback(err)
 
         return callback(null, response)
