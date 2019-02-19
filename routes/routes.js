@@ -17,6 +17,8 @@ module.exports = (app) => {
 
     //order
     app.post('/init_order', order.initOrder)
+    app.post('/get_order', order.getOrder)
+
     app.post('/update_collection_type', order.updateCollectionType)
     app.post('/random_max_price_order', order.randomMaxPriceOrder)
     app.post('/add_item',order.addItemToOrder)

@@ -1,6 +1,8 @@
 var hellPizza = require('/Users/gabriel/Desktop/hell_pizza_npm')
 var async = require('async')
-
+const error_codes = {
+    missing_param: "Missing parameter: "
+}
 module.exports = {
 
     initOrder(req, res) {
@@ -13,7 +15,7 @@ module.exports = {
 
     clearOrderItems(req, res) {
         if (!req.body.token)
-            return res.status(401).send({ error: "Missing parameter: order_token" })
+            return res.status(401).send({ error: error_codes.missing_param + 'order_token' })
 
         hellPizza.Order.getOrder(req.body.token, function (err, response) {
             if (err) return res.status(500).send({ error: err })
@@ -84,46 +86,19 @@ module.exports = {
 
     randomMaxPriceOrder(req, res) {
         if (!req.body.max_price)
-            return res.status(401).send({ error: "Missing parameter: max_price" })
+            return res.status(401).send({ error: error_codes.missing_param + 'max_price' })
 
         if (!req.body.token)
-            return res.status(401).send({ error: "Missing parameter: token" })
+            return res.status(401).send({ error: error_codes.missing_param + 'token' })
 
         if (!req.body.store_id)
-            return res.status(401).send({ error: "Missing parameter: token" })
-   
+            return res.status(401).send({ error: error_codes.missing_param + 'store_id' })
+
         var store_id = req.body.store_id
-        //get specific menus in parallel 
-        async.parallel([
-            function (callback) {
-                hellPizza.Menu.getPizzas(store_id, function (err, response) {
-                    callback(err, response)
-                })
-            },
-            function (callback) {
-                hellPizza.Menu.getSides(store_id, function (err, response) {
-                    callback(err, response)
-                })
-            },
-            function (callback) {
-                hellPizza.Menu.getDesserts(store_id, function (err, response) {
-                    callback(err, response)
-                })
-            },
-            function (callback) {
-                hellPizza.Menu.getSalads(store_id, function (err, response) {
-               
-                    callback(err, response)
-                })
-            },
-            function (callback) {
-                hellPizza.Menu.getSoftDrinks(store_id, function (err, response) {
-                    callback(err, response)
-                })
-            }
-        ], function (err, menus) {
+
+        loadInMenus(store_id, function (err, menus) {
             if (err) return res.status(500).send({ error: err })
-            console.log(menus)
+
             var errors = []
             hellPizza.Order.getOrder(req.body.token, function (err, response) {
                 if (err) return res.status(500).send({ error: err })
@@ -136,7 +111,6 @@ module.exports = {
                     errors.push(err)
                     var random_menu = Math.floor(Math.random() * menus.length)
                     var selected_menu = menus[random_menu]
-
                     return addRandomItemToOrder(req.body.token, selected_menu, evaluateNext)
                 } //if it fails to add (eg. due to out of stock on item) should continue.
 
@@ -149,26 +123,53 @@ module.exports = {
             }
         })
     },
-
-    randomItemKnownOrder(req, res) {
-        if (!req.body.pizza_amount)
-            return res.status(401).send({ error: "Missing field: max_price" })
-    },
-
-    entirelyRandomOrder(req, res) {
-
-    }
 }
 
 function addRandomItemToOrder(order_token, selected_menu, callback) {
     var rnd = Math.floor(Math.random() * selected_menu.items.length)
     var random_item = selected_menu.items[rnd]
+
     var random_size_num = Math.floor(Math.random() * random_item.sizes.length)
     var random_size = random_item.sizes[random_size_num]
-    console.log("adding " + random_item)
+
     hellPizza.Order.addItem(order_token, random_item.item_id, random_size.item_size_id, 200, {}, "", function (err, response) {
         if (err) return callback(err)
 
         return callback(null, response)
+    })
+}
+
+function loadInMenus(store_id, callback) {
+    
+    async.parallel([
+        function (callback) {
+            hellPizza.Menu.getPizzas(store_id, function (err, response) {
+                callback(err, response)
+            })
+        },
+        function (callback) {
+            hellPizza.Menu.getSides(store_id, function (err, response) {
+                callback(err, response)
+            })
+        },
+        function (callback) {
+            hellPizza.Menu.getDesserts(store_id, function (err, response) {
+                callback(err, response)
+            })
+        },
+        function (callback) {
+            hellPizza.Menu.getSalads(store_id, function (err, response) {
+
+                callback(err, response)
+            })
+        },
+        function (callback) {
+            hellPizza.Menu.getSoftDrinks(store_id, function (err, response) {
+                callback(err, response)
+            })
+        }
+    ], function (err, menus) {
+
+        return callback(err, menus)
     })
 }

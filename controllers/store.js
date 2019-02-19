@@ -14,9 +14,4 @@ module.exports = {
             })
         })
     },
-
-    getStoreDeliveryTypes() {
-        
-    }
-
 }
