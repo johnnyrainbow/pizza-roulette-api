@@ -89,43 +89,41 @@ module.exports = {
         if (!req.body.token)
             return res.status(401).send({ error: "Missing parameter: token" })
 
+        if (!req.body.store_id)
+            return res.status(401).send({ error: "Missing parameter: token" })
+   
+        var store_id = req.body.store_id
         //get specific menus in parallel 
-
-        var menu = []
         async.parallel([
             function (callback) {
-                hellPizza.Menu.getPizzas(function (err, response) {
-                    menu.pizzas = response
+                hellPizza.Menu.getPizzas(store_id, function (err, response) {
                     callback(err, response)
                 })
             },
             function (callback) {
-                hellPizza.Menu.getSides(function (err, response) {
-                    menu.sides = response
+                hellPizza.Menu.getSides(store_id, function (err, response) {
                     callback(err, response)
                 })
             },
             function (callback) {
-                hellPizza.Menu.getDesserts(function (err, response) {
-                    menu.desserts = response
+                hellPizza.Menu.getDesserts(store_id, function (err, response) {
                     callback(err, response)
                 })
             },
             function (callback) {
-                hellPizza.Menu.getSalads(function (err, response) {
-                    menu.salads = response
+                hellPizza.Menu.getSalads(store_id, function (err, response) {
+               
                     callback(err, response)
                 })
             },
             function (callback) {
-                hellPizza.Menu.getSoftDrinks(function (err, response) {
-                    menu.soft_drinks = response
+                hellPizza.Menu.getSoftDrinks(store_id, function (err, response) {
                     callback(err, response)
                 })
             }
         ], function (err, menus) {
             if (err) return res.status(500).send({ error: err })
-
+            console.log(menus)
             var errors = []
             hellPizza.Order.getOrder(req.body.token, function (err, response) {
                 if (err) return res.status(500).send({ error: err })
@@ -163,11 +161,11 @@ module.exports = {
 }
 
 function addRandomItemToOrder(order_token, selected_menu, callback) {
-    var rnd = Math.floor(Math.random() * selected_menu.length)
-    var random_item = selected_menu[rnd]
+    var rnd = Math.floor(Math.random() * selected_menu.items.length)
+    var random_item = selected_menu.items[rnd]
     var random_size_num = Math.floor(Math.random() * random_item.sizes.length)
     var random_size = random_item.sizes[random_size_num]
-
+    console.log("adding " + random_item)
     hellPizza.Order.addItem(order_token, random_item.item_id, random_size.item_size_id, 200, {}, "", function (err, response) {
         if (err) return callback(err)
 
