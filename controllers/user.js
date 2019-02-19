@@ -1,4 +1,4 @@
-var hellPizza = require('/Users/gabriel/Desktop/hell_pizza_npm')
+var hellPizza = require('hell-pizza-api')
 
 module.exports = {
 

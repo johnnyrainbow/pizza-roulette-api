@@ -1,4 +1,4 @@
-var hellPizza = require('/Users/gabriel/Desktop/hell_pizza_npm')
+var hellPizza = require('hell-pizza-api')
 var async = require('async')
 const error_codes = {
     missing_param: "Missing parameter: "
@@ -140,7 +140,7 @@ function addRandomItemToOrder(order_token, selected_menu, callback) {
 }
 
 function loadInMenus(store_id, callback) {
-    
+
     async.parallel([
         function (callback) {
             hellPizza.Menu.getPizzas(store_id, function (err, response) {
